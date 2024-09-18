@@ -1,5 +1,8 @@
 node_modules
 uploads
+!uploads/.gitkeep
 input
+!input/.gitkeep
 output
+!output/.gitkeep
 package-lock.json
