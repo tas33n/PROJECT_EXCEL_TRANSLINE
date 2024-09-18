@@ -1,0 +1,48 @@
+/* public/styles.css */
+body {
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradient 15s ease infinite;
+    height: 100vh;
+    font-family: Arial, sans-serif;
+}
+
+@keyframes gradient {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.drop-zone {
+    border: 2px dashed #fff;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.console {
+    background-color: rgba(0, 0, 0, 0.7);
+    color: #00ff00;
+    font-family: 'Courier New', monospace;
+    padding: 10px;
+    border-radius: 5px;
+    height: 300px;
+    overflow-y: auto;
+}
+
+.file-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
