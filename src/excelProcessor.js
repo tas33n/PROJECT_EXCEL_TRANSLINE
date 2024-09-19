@@ -3,8 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const chalk = require("chalk");
 
-const INPUT_DIR = "./input";
-const BASE_OUTPUT_DIR = "./output";
+const BASE_OUTPUT_DIR = path.join(process.cwd(), "output");
 const CONTAINER_NUMBER_REGEX = /^[A-Z]{4}\d{7}$/;
 
 // Helper Functions
@@ -27,6 +26,20 @@ const createOutputDirectory = (refValue) => {
   return refDir;
 };
 
+const clearOutputDirectory = () => {
+  if (fs.existsSync(BASE_OUTPUT_DIR)) {
+    fs.readdirSync(BASE_OUTPUT_DIR).forEach((file) => {
+      const curPath = path.join(BASE_OUTPUT_DIR, file);
+      if (fs.lstatSync(curPath).isDirectory()) {
+        fs.rmSync(curPath, { recursive: true, force: true });
+      } else {
+        fs.unlinkSync(curPath);
+      }
+    });
+    console.log(chalk.green(`[${new Date().toISOString()}] Output directory cleared.`));
+  }
+};
+
 const extractReferenceValue = (sheet) => {
   const data = XLSX.utils.sheet_to_json(sheet, { defval: "" });
   const refRow = data.find(
@@ -47,7 +60,7 @@ const extractContainerData = (sheet) => {
       containerData[currentContainer] = [];
     }
 
-    if (currentContainer && row["__EMPTY_9"]) {
+    if (currentContainer && row["__EMPTY_9"] && row["__EMPTY_9"] !== "Total") {
       containerData[currentContainer].push({
         Description: row["__EMPTY_9"],
         Total: row["__EMPTY_10"],
@@ -197,44 +210,5 @@ const saveAsExcel = ({ refValue, containerData }) => {
 
   return savedFiles;
 };
-
-const main = () => {
-  try {
-    const start = Date.now();
-    let fileCount = 0;
-    let createdFileCount = 0;
-
-    fs.readdirSync(INPUT_DIR)
-      .filter((file) => path.extname(file) === ".xlsx")
-      .forEach((file) => {
-        const filePath = path.join(INPUT_DIR, file);
-        fileCount++;
-        const { refValue, containerData } = processFile(filePath);
-        if (Object.keys(containerData).length > 0) {
-          createdFileCount += Object.keys(containerData).length;
-        }
-        saveAsExcel({ refValue, containerData });
-      });
-
-    const end = Date.now();
-    const duration = ((end - start) / 1000).toFixed(2); // Duration in seconds
-
-    console.log(chalk.cyan(`\n[${new Date().toISOString()}] Summary:`));
-    console.log(chalk.cyan(`- Total input files processed: ${fileCount}`));
-    console.log(
-      chalk.cyan(`- Total output files created: ${createdFileCount}`)
-    );
-    console.log(chalk.cyan(`- Total processing time: ${duration} seconds`));
-  } catch (error) {
-    console.error(
-      chalk.red(
-        `[${new Date().toISOString()}] An error occurred during processing:`
-      ),
-      error
-    );
-  }
-};
-
-// main();
 
 module.exports = { processFile, saveAsExcel };

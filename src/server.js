@@ -16,25 +16,30 @@ app.post("/upload", upload.array("files"), (req, res) => {
   const logs = [];
 
   files.forEach((file) => {
-    const { refValue, containerData } = processFile(file.path);
-    const sanitizedRefValue = refValue.replace(/[^a-zA-Z0-9]/g, "_");
-    const folderPath = path.join(__dirname, "output", sanitizedRefValue);
+    try {
+      const { refValue, containerData } = processFile(file.path);
+      const sanitizedRefValue = refValue.replace(/[^a-zA-Z0-9]/g, "_");
+      const folderPath = path.join(process.cwd(), "output", sanitizedRefValue);
 
-    if (!fs.existsSync(folderPath)) {
-      fs.mkdirSync(folderPath, { recursive: true });
+      if (!fs.existsSync(folderPath)) {
+        fs.mkdirSync(folderPath, { recursive: true });
+      }
+
+      const savedFiles = saveAsExcel({ refValue, containerData });
+      savedFiles.forEach((savedFile) => {
+        const destPath = path.join(folderPath, path.basename(savedFile));
+        fs.renameSync(savedFile, destPath);
+      });
+
+      outputDirs.push({ name: sanitizedRefValue, path: folderPath });
+      logs.push(`Processed ${file.originalname}`);
+
+      fs.unlinkSync(file.path);
+    } catch (error) {
+      logs.push(`Error processing ${file.originalname}: ${error.message}`);
     }
-
-    const savedFiles = saveAsExcel({ refValue, containerData });
-    savedFiles.forEach((file) => {
-      const destPath = path.join(folderPath, path.basename(file));
-      fs.renameSync(file, destPath);
-    });
-
-    outputDirs.push({ name: sanitizedRefValue, path: folderPath });
-    logs.push(`Processed ${file.originalname}`);
   });
 
-  // Convert folder names to be used in the frontend
   const foldersForResponse = outputDirs.map((dir) => ({
     name: dir.name,
   }));
@@ -44,7 +49,7 @@ app.post("/upload", upload.array("files"), (req, res) => {
 
 app.get("/download-zip/:folderName", (req, res) => {
   const folderName = req.params.folderName;
-  const folderPath = path.join(__dirname, "output", folderName);
+  const folderPath = path.join(process.cwd(), "output", folderName);
 
   if (!fs.existsSync(folderPath)) {
     return res.status(404).send({ error: "Folder not found" });
@@ -88,7 +93,7 @@ app.get("/download-zip/:folderName", (req, res) => {
 });
 
 app.get("/open-folder", (req, res) => {
-  const folderPath = path.join(__dirname, "output");
+  const folderPath = path.join(process.cwd(), "output");
   require("child_process").exec(`start "" "${folderPath}"`);
   res.json({ success: true });
 });
